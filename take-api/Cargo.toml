@@ -27,5 +27,9 @@ version = "0.2.0"
 [dependencies.panic-msp430]
 version = "0.1.0"
 
+[dev-dependencies]
+bare-metal = "0.2.5"
+
 [features]
 unsafe = []
+bare_metal = []

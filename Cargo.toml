@@ -6,4 +6,5 @@ members = ["borrow-api", "take-api"]
 msp430-rt = { git = "https://github.com/rust-embedded/msp430-rt", branch = "rt-up" }
 
 [profile.release]
+opt-level = "s"
 lto = true
