@@ -1,9 +1,18 @@
 [workspace]
 members = ["my-wrapper", "borrow-api", "take-api"]
 
-[patch.crates-io]
-# msp430 = { git = "https://github.com/rust-embedded/msp430", branch = "rt-up" }
-msp430-rt = { git = "https://github.com/rust-embedded/msp430-rt", branch = "rt-up" }
+[patch.crates-io.msp430]
+git = "https://github.com/rust-embedded/msp430"
+branch = "rt-up"
+version = "0.1.1"
+
+[patch.crates-io.msp430-rt]
+git = "https://github.com/rust-embedded/msp430-rt"
+branch = "rt-up"
+
+[patch.crates-io.msp430g2553]
+git = "https://github.com/cr1901/msp430g2553"
+branch = "rt-up"
 
 [profile.release]
 codegen-units = 1
