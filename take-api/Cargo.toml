@@ -28,8 +28,9 @@ version = "0.2.0"
 version = "0.1.0"
 
 [dev-dependencies]
-bare-metal = "0.2.5"
+# bare-metal = "0.2.5"
+my-wrapper = { path = "../my-wrapper" }
 
 [features]
 unsafe = []
-bare_metal = []
+trigger-regress = []
