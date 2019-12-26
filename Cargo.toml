@@ -4,6 +4,7 @@ members = ["my-wrapper", "borrow-api", "take-api"]
 [patch.crates-io.msp430]
 git = "https://github.com/rust-embedded/msp430"
 branch = "rt-up"
+version = "0.1.1"
 
 [patch.crates-io.msp430-rt]
 git = "https://github.com/rust-embedded/msp430-rt"
