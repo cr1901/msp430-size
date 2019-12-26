@@ -6,21 +6,15 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies.msp430]
-git = "https://github.com/rust-embedded/msp430"
-branch = "rt-up"
 version = "0.1.0"
 
 [dependencies.msp430-rt]
-git = "https://github.com/rust-embedded/msp430-rt"
-branch = "rt-up"
 version = "0.2.0"
 
 # [dependencies.msp430-rtfm]
 # git = "https://github.com/japaric/msp430-rtfm"
 
 [dependencies.msp430g2553]
-git = "https://github.com/cr1901/msp430g2553"
-branch = "rt-up"
 features = ["rt"]
 version = "0.2.0"
 
