@@ -1,0 +1,8 @@
+[dependencies.core]
+stage = 0
+
+[dependencies.compiler_builtins]
+# A version may need to be specified to avoid new features from leaking into
+# an older compiler.
+features = ["mem"]
+stage = 1
