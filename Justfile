@@ -22,6 +22,9 @@ compare-min-xargo:
 bisect START END SCRIPT:
     cargo-bisect-rustc --script={{SCRIPT}} --preserve-target --preserve --start={{START}} --end={{END}} --with-src
 
+uninstall-bisect:
+    rustup toolchain list | grep bisector | xargs -n 1 rustup toolchain uninstall
+
 clean-bisect:
     rm -rf target-bisector-nightly-*
-    rm -rf target-ci-*
+    rm -rf target-bisector-ci-*
