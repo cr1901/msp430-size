@@ -6,9 +6,9 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-msp430 = "0.2.2" # Version may need to be specified to avoid llvm_asm! issues.
-msp430-rt = "0.2.0"
-panic-msp430 = "0.2.0"
+msp430 = "0.3.0" # Version may need to be specified to avoid llvm_asm! issues.
+msp430-rt = "0.3.0"
+panic-msp430 = "0.3.0"
 
 
 # [dependencies.msp430-rtfm]
@@ -16,10 +16,10 @@ panic-msp430 = "0.2.0"
 
 [dependencies.msp430g2553]
 features = ["rt"]
-version = "0.2.0"
+version = "0.3.0"
 
 [dev-dependencies]
-bare-metal = "0.2.5"
+bare-metal = "1.0.0"
 # my-wrapper = { path = "../my-wrapper" }
 
 [features]

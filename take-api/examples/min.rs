@@ -17,22 +17,25 @@ use bare_metal;
 // If we implement bare_metal ourselves, the dead code disappears.
 #[cfg(not(feature = "use-bare-metal"))]
 mod bare_metal {
+    use core::marker::PhantomData;
     use core::cell::UnsafeCell;
+    
 
     /// Critical section token
     ///
     /// Indicates that you are executing code within a critical section
-    pub struct CriticalSection {
-        _0: (),
+    #[derive(Clone, Copy, Debug)]
+    pub struct CriticalSection<'cs> {
+        _0: PhantomData<&'cs ()>,
     }
 
-    impl CriticalSection {
+    impl<'cs> CriticalSection<'cs> {
         /// Creates a critical section token
         ///
         /// This method is meant to be used to create safe abstractions rather than
         /// meant to be directly used in applications.
         pub unsafe fn new() -> Self {
-            CriticalSection { _0: () }
+            CriticalSection { _0: PhantomData }
         }
     }
 
@@ -58,7 +61,7 @@ mod bare_metal {
 
     impl<T> Mutex<T> {
         /// Borrows the data for the duration of the critical section
-        pub fn borrow<'cs>(&'cs self, _cs: &'cs CriticalSection) -> &'cs T {
+        pub fn borrow<'cs>(&'cs self, _cs: CriticalSection<'cs>) -> &'cs T {
             unsafe { &*self.inner.get() }
         }
     }
@@ -74,8 +77,8 @@ static PERIPHERALS : bare_metal::Mutex<RefCell<Option<u8>>> =
 
 #[entry]
 fn main() -> ! {
-    let _ = PERIPHERALS.borrow(unsafe { &bare_metal::CriticalSection::new() }).borrow_mut();
-    let _ = PERIPHERALS.borrow(unsafe { &bare_metal::CriticalSection::new() }).borrow();
+    let _ = PERIPHERALS.borrow(unsafe { bare_metal::CriticalSection::new() }).borrow_mut();
+    let _ = PERIPHERALS.borrow(unsafe { bare_metal::CriticalSection::new() }).borrow();
 
     loop { }
 }

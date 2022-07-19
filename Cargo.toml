@@ -1,9 +1,5 @@
 [workspace]
-members = ["borrow-api", "take-api"]
-
-[patch.crates-io.msp430g2553]
-git = "https://github.com/cr1901/msp430g2553"
-branch = "rt-up"
+members = ["take-api"]
 
 [profile.release]
 opt-level = "s"
