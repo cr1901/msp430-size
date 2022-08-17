@@ -6,7 +6,7 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-msp430 = "0.3.0" # Version may need to be specified to avoid llvm_asm! issues.
+msp430 = { version = "0.3.1", git = "https://github.com/rust-embedded/msp430", branch = "critical-section", features = ["critical-section-single-core"] } # Version may need to be specified to avoid llvm_asm! issues.
 msp430-rt = "0.3.0"
 panic-msp430 = "0.3.0"
 
@@ -20,8 +20,12 @@ version = "0.3.0"
 
 [dev-dependencies]
 bare-metal = "1.0.0"
+critical = { version = "0.1", path = "../critical" }
+critical-section = "1.0.0"
 once_cell = { version = "1.7.0", default_features = false}
+portable-atomic = "0.3.13"
 
 [features]
 unsafe = []
 use-bare-metal = []
+use-extern-cs = []

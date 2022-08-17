@@ -1,0 +1,9 @@
+[package]
+name = "critical"
+version = "0.1.0"
+authors = ["William D. Jones <thor0505@comcast.net>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+msp430 = { version = "0.3.1", git = "https://github.com/rust-embedded/msp430", branch = "critical-section", features = ["critical-section-single-core"] } # Version may need to be specified to avoid llvm_asm! issues.

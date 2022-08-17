@@ -1,6 +1,9 @@
 [workspace]
-members = ["take-api"]
+members = ["critical", "take-api"]
 
 [profile.release]
 opt-level = "s"
 lto = true
+
+[patch.crates-io]
+msp430 = { version = "0.3.1", git = "https://github.com/rust-embedded/msp430", branch = "critical-section" }

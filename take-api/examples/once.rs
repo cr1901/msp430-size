@@ -5,7 +5,7 @@
 
 extern crate panic_msp430;
 
-use bare_metal::{CriticalSection, Mutex};
+use msp430::interrupt::{CriticalSection, Mutex};
 use msp430_rt::entry;
 use msp430g2553::{interrupt, Peripherals};
 use once_cell::unsync::OnceCell;
