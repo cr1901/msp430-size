@@ -7,10 +7,10 @@ extern crate critical;
 extern crate panic_msp430;
 
 use critical_section::{CriticalSection, Mutex};
-use msp430::{interrupt as mspint, register};
 use msp430_rt::entry;
 use once_cell::unsync::OnceCell;
 
+#[cfg(not(feature = "use-extern-cs"))]
 use critical::free;
 
 pub fn free_extern<F, R>(f: F) -> R

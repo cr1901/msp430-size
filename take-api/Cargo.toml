@@ -25,6 +25,10 @@ critical-section = "1.0.0"
 once_cell = { version = "1.7.0", default_features = false}
 portable-atomic = "0.3.13"
 
+[[example]]
+name = "critical"
+required-features = [ "critical/msp430" ]
+
 [features]
 unsafe = []
 use-bare-metal = []
