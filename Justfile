@@ -1,12 +1,19 @@
 set dotenv-load
 
-build-example EXAMPLE OVERRIDE="nightly" WORKSPACE="take-api":
+build-example EXAMPLE FEATURES="" OVERRIDE="nightly" WORKSPACE="take-api":
     #!/bin/sh
 
     set -eux
 
-    TARGET=target/msp430-none-elf/release/examples/{{EXAMPLE}}
-    cargo +{{OVERRIDE}} rustc --manifest-path=./{{WORKSPACE}}/Cargo.toml --release -Zbuild-std=core --example={{EXAMPLE}} -- --emit=obj=$TARGET.o,llvm-ir=$TARGET.ll,asm=$TARGET.s
+    if [ -z {{EXAMPLE}} ]; then
+        EXAMPLES=""
+        TARGET=target/msp430-none-elf/release/{{WORKSPACE}}
+    else
+        EXAMPLES="--example={{EXAMPLE}}"
+        TARGET=target/msp430-none-elf/release/examples/{{EXAMPLE}}
+    fi
+
+    cargo +{{OVERRIDE}} rustc --manifest-path=./{{WORKSPACE}}/Cargo.toml --release -Zbuild-std=core $EXAMPLES --features={{FEATURES}} -- --emit=obj=$TARGET.o,llvm-ir=$TARGET.ll,asm=$TARGET.s
     msp430-elf-objdump -Cd $TARGET > $TARGET.lst
     msp430-elf-readelf -a --wide $TARGET > $TARGET.sym
     msp430-elf-objdump -Cd $TARGET.o > $TARGET.o.lst
@@ -46,3 +53,22 @@ uninstall-bisect:
 clean-bisect:
     rm -rf target-bisector-nightly-*
     rm -rf target-bisector-ci-*
+
+zip SUFFIX="":
+    #!/bin/sh
+
+    set -eu
+
+    if [ -z {{SUFFIX}} ]; then
+        SUFFIX=`rustc -V | sed 's/.*(\([0-9a-f]*\).*)/\1/'`
+    else
+        SUFFIX=""
+    fi
+
+    if [ -e target-$SUFFIX.zip ]; then
+        echo "target-$SUFFIX.zip already exists"
+        exit 1
+    fi
+
+    zip -r target-$SUFFIX.zip target
+    echo "target-$SUFFIX.zip"
