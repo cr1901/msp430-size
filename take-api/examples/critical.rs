@@ -1,6 +1,7 @@
 #![no_main]
 #![no_std]
 #![feature(abi_msp430_interrupt)]
+#![feature(asm_experimental_arch)]
 
 use cfg_if::cfg_if;
 
@@ -8,16 +9,16 @@ cfg_if! {
     if #[cfg(target_arch = "msp430") ] {
         extern crate msp430g2553;
         extern crate panic_msp430;
-        use msp430::asm::barrier;
         use msp430_rt::entry;
     } else if #[cfg(target_arch = "arm") ] {
         use panic_halt as _;
-        use cortex_m::asm::dsb as barrier;
         use cortex_m_rt::entry;
     }
 }
 
 extern crate critical;
+
+use core::arch::asm;
 use critical_section::{CriticalSection, Mutex};
 use once_cell::unsync::OnceCell;
 
@@ -52,36 +53,31 @@ fn main() -> ! {
     start_timer().unwrap();
     loop {
         // start_timer().unwrap();
-        barrier();
+        unsafe { asm!(""); }
     }
 }
 
 fn start_timer() -> Result<(), ()> {
-    #[cfg(feature = "use-extern-cs")]
-    {
-        free_extern(|_| {
-            let _ = &PERIPHERALS
-                .borrow(unsafe { CriticalSection::new() })
-                .get()
-                // .unwrap(); // If unwrap() is used instead, codegen is identical.
-                .ok_or(())?; 
+    fn internal_impl() -> Result<(), ()> {
+        let _ = &PERIPHERALS
+                    .borrow(unsafe { CriticalSection::new() })
+                    .get()
+                    // .unwrap(); // If unwrap() is used instead, codegen is identical.
+                    .ok_or(())?; 
 
-            barrier();
-            Ok(())
-        })
+        unsafe {  asm!(""); }
+        Ok(())
     }
 
-    #[cfg(not(feature = "use-extern-cs"))]
-    {
-        free(|_| {
-            let _ = &PERIPHERALS
-                .borrow(unsafe { CriticalSection::new() })
-                .get()
-                // .unwrap(); // If unwrap() is used instead, codegen is identical.
-                .ok_or(())?;
-
-            barrier();
-            Ok(())
-        })
+    cfg_if! {
+        if #[cfg(feature = "use-extern-cs")] {
+            free_extern(|_| {
+                internal_impl()
+            })
+        } else {
+            free(|_| {
+                internal_impl()
+            })
+        }
     }
 }
