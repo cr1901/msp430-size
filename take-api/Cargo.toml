@@ -22,14 +22,9 @@ cortex-m-rt = "0.7.1"
 [dev-dependencies]
 bare-metal = "1.0.0"
 cfg-if = "1.0.0"
+critical = { version = "0.1", path = "../critical" }
 critical-section = "1.0.0"
 once_cell = { version = "1.7.0", default_features = false }
-
-[target.'cfg(target_arch = "msp430")'.dev-dependencies]
-critical = { version = "0.1", path = "../critical", features = ["msp430"] }
-
-[target.'cfg(target_arch = "arm")'.dev-dependencies]
-critical = { version = "0.1", path = "../critical" }
 
 [features]
 unsafe = []
