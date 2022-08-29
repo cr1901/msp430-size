@@ -32,7 +32,7 @@ cfg_if! {
         use msp430::{register, interrupt};
         use msp430::interrupt::CriticalSection;
 
-        #[inline]
+        #[cfg_attr(feature = "inline", inline)]
         unsafe fn acquire_internal() -> u16 {
             let status = register::sr::read();
             interrupt::disable();
@@ -41,7 +41,7 @@ cfg_if! {
             core::mem::transmute(status)
         }
 
-        #[inline]
+        #[cfg_attr(feature = "inline", inline)]
         unsafe fn release_internal(restore_state: u16) {
             // Safety: Must be called w/ acquire, otherwise we could receive
             // an invalid Sr (even though internally it's a u16, not all bits
@@ -58,7 +58,7 @@ cfg_if! {
         use core::arch::asm;
         use critical_section::CriticalSection;
 
-        #[inline]
+        #[cfg_attr(feature = "inline", inline)]
         unsafe fn acquire_internal() -> u16 {
             let fake_sr: u16 = 0;
 
@@ -67,7 +67,7 @@ cfg_if! {
             sr
         }
 
-        #[inline]
+        #[cfg_attr(feature = "inline", inline)]
         pub unsafe fn release_internal(restore_state: u16) {
             if restore_state != 0 {
                 asm!("");
