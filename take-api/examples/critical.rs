@@ -22,23 +22,26 @@ use core::arch::asm;
 use critical_section::{CriticalSection, Mutex};
 use once_cell::unsync::OnceCell;
 
-#[cfg(not(feature = "use-extern-cs"))]
-use critical::free;
+cfg_if! {
+    if #[cfg(not(feature = "use-extern-cs"))] {
+        use critical::free;
+    } else {
+        pub fn free<F, R>(f: F) -> R
+        where
+            F: FnOnce(CriticalSection) -> R,
+        {
+            extern "Rust" {
+                fn acquire() -> u16;
+                fn release(restore_state: u16);
+            }    
 
-pub fn free_extern<F, R>(f: F) -> R
-where
-    F: FnOnce(CriticalSection) -> R,
-{
-    extern "Rust" {
-        fn acquire() -> u16;
-        fn release(restore_state: u16);
-    }    
-
-    unsafe {
-        let restore_state = acquire();
-        let r = f(CriticalSection::new());
-        release(restore_state);
-        r
+            unsafe {
+                let restore_state = acquire();
+                let r = f(CriticalSection::new());
+                release(restore_state);
+                r
+            }
+        }
     }
 }
 
@@ -58,7 +61,7 @@ fn main() -> ! {
 }
 
 fn start_timer() -> Result<(), ()> {
-    fn internal_impl() -> Result<(), ()> {
+    free(|_| {
         let _ = &PERIPHERALS
                     .borrow(unsafe { CriticalSection::new() })
                     .get()
@@ -67,17 +70,5 @@ fn start_timer() -> Result<(), ()> {
 
         unsafe {  asm!(""); }
         Ok(())
-    }
-
-    cfg_if! {
-        if #[cfg(feature = "use-extern-cs")] {
-            free_extern(|_| {
-                internal_impl()
-            })
-        } else {
-            free(|_| {
-                internal_impl()
-            })
-        }
-    }
+    })
 }
