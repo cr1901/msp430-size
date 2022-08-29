@@ -2,12 +2,23 @@
 #![no_std]
 #![feature(abi_msp430_interrupt)]
 
-extern crate msp430g2553;
-extern crate critical;
-extern crate panic_msp430;
+use cfg_if::cfg_if;
 
+cfg_if! {
+    if #[cfg(target_arch = "msp430") ] {
+        extern crate msp430g2553;
+        extern crate panic_msp430;
+        use msp430::asm::barrier;
+        use msp430_rt::entry;
+    } else if #[cfg(target_arch = "arm") ] {
+        use panic_halt as _;
+        use cortex_m::asm::dsb as barrier;
+        use cortex_m_rt::entry;
+    }
+}
+
+extern crate critical;
 use critical_section::{CriticalSection, Mutex};
-use msp430_rt::entry;
 use once_cell::unsync::OnceCell;
 
 #[cfg(not(feature = "use-extern-cs"))]
@@ -41,7 +52,7 @@ fn main() -> ! {
     start_timer().unwrap();
     loop {
         // start_timer().unwrap();
-        msp430::asm::barrier();
+        barrier();
     }
 }
 
@@ -55,7 +66,7 @@ fn start_timer() -> Result<(), ()> {
                 // .unwrap(); // If unwrap() is used instead, codegen is identical.
                 .ok_or(())?; 
 
-            msp430::asm::barrier();
+            barrier();
             Ok(())
         })
     }
@@ -69,7 +80,7 @@ fn start_timer() -> Result<(), ()> {
                 // .unwrap(); // If unwrap() is used instead, codegen is identical.
                 .ok_or(())?;
 
-            msp430::asm::barrier();
+            barrier();
             Ok(())
         })
     }

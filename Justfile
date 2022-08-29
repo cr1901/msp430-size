@@ -1,24 +1,37 @@
 set dotenv-load
 
-build-example EXAMPLE FEATURES="" OVERRIDE="nightly" WORKSPACE="take-api":
+build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" WORKSPACE="take-api":
     #!/bin/sh
 
     set -eux
 
-    if [ -z {{EXAMPLE}} ]; then
-        EXAMPLES=""
-        TARGET=target/msp430-none-elf/release/{{WORKSPACE}}
+    if [ {{TARGET}} = "msp430-none-elf" ]; then
+        OBJDUMP="msp430-elf-objdump"
+        READELF="msp430-elf-readelf"
+        SIZE="msp430-elf-size"
+    elif [ {{TARGET}} = "thumbv6m-none-eabi" ]; then
+        OBJDUMP="llvm-objdump"
+        READELF="llvm-readelf"
+        SIZE="llvm-size"
     else
-        EXAMPLES="--example={{EXAMPLE}}"
-        TARGET=target/msp430-none-elf/release/examples/{{EXAMPLE}}
+        echo "Unsupport target {{TARGET}}"
+        exit 1
     fi
 
-    cargo +{{OVERRIDE}} rustc --manifest-path=./{{WORKSPACE}}/Cargo.toml --release -Zbuild-std=core $EXAMPLES --features={{FEATURES}} -- --emit=obj=$TARGET.o,llvm-ir=$TARGET.ll,asm=$TARGET.s
-    msp430-elf-objdump -Cd $TARGET > $TARGET.lst
-    msp430-elf-readelf -a --wide $TARGET > $TARGET.sym
-    msp430-elf-objdump -Cd $TARGET.o > $TARGET.o.lst
-    msp430-elf-readelf -a --wide $TARGET.o > $TARGET.reloc
-    msp430-elf-size $TARGET
+    if [ -z {{EXAMPLE}} ]; then
+        EXAMPLES=""
+        TARGET=target/{{TARGET}}/release/{{WORKSPACE}}
+    else
+        EXAMPLES="--example={{EXAMPLE}}"
+        TARGET=target/{{TARGET}}/release/examples/{{EXAMPLE}}
+    fi
+
+    cargo +{{OVERRIDE}} rustc --manifest-path=./{{WORKSPACE}}/Cargo.toml --target={{TARGET}} --release -Zbuild-std=core $EXAMPLES --features={{FEATURES}} -- --emit=obj=$TARGET.o,llvm-ir=$TARGET.ll,asm=$TARGET.s
+    $OBJDUMP -Cd $TARGET > $TARGET.lst
+    $READELF -a --wide $TARGET > $TARGET.sym
+    $OBJDUMP -Cd $TARGET.o > $TARGET.o.lst
+    $READELF -a --wide $TARGET.o > $TARGET.reloc
+    $SIZE $TARGET
 
 # Compare sizes using rustup
 compare-min OVERRIDE="nightly":
