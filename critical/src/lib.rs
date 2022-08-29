@@ -2,6 +2,7 @@
 #![feature(asm_experimental_arch)]
 
 use cfg_if::cfg_if;
+use critical_section::CriticalSection;
 
 // critical crate provides the only provides acquire/release.
 #[no_mangle]
@@ -30,7 +31,6 @@ where
 cfg_if! {
     if #[cfg(feature = "msp430")] {
         use msp430::{register, interrupt};
-        use msp430::interrupt::CriticalSection;
 
         #[cfg_attr(feature = "inline", inline)]
         unsafe fn acquire_internal() -> u16 {
@@ -54,9 +54,25 @@ cfg_if! {
                 interrupt::enable();
             }
         }
+    } else if #[cfg(feature = "cortex-m")] {
+        use cortex_m::register::primask;
+        use cortex_m::interrupt;
+
+        #[cfg_attr(feature = "inline", inline)]
+        unsafe fn acquire_internal() -> u16 {
+            let was_active = primask::read().is_active();
+            interrupt::disable();
+            was_active as u16
+        }
+
+        #[cfg_attr(feature = "inline", inline)]
+        unsafe fn release_internal(restore_state: u16) {
+            if restore_state != 0 {
+                interrupt::enable()
+            }
+        }
     } else {
         use core::arch::asm;
-        use critical_section::CriticalSection;
 
         #[cfg_attr(feature = "inline", inline)]
         unsafe fn acquire_internal() -> u16 {
