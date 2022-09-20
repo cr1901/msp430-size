@@ -1,31 +1,37 @@
 #![no_main]
 #![no_std]
 #![feature(abi_msp430_interrupt)]
+#![cfg_attr(not(feature = "unsafe"), deny(unsafe_code))]
 
 extern crate panic_msp430;
 
-#[cfg(not(feature = "unsafe"))]
-use core::cell::RefCell;
-use msp430::interrupt as mspint;
+use cfg_if::cfg_if;
+
+use msp430::{{interrupt as mspint}, interrupt::CriticalSection};
 use msp430_rt::entry;
 use msp430g2553::{interrupt, Peripherals};
 
-#[cfg(not(feature = "unsafe"))]
-static PERIPHERALS : mspint::Mutex<RefCell<Option<Peripherals>>> =
-    mspint::Mutex::new(RefCell::new(None));
+cfg_if! {
+    if #[cfg(not(feature = "unsafe"))] {
+        use core::cell::RefCell;
+        static PERIPHERALS : mspint::Mutex<RefCell<Option<Peripherals>>> =
+            mspint::Mutex::new(RefCell::new(None));
+    }
+}
 
-#[entry]
-fn main() -> ! {
-    #[cfg(not(feature = "unsafe"))]
-    let p = Peripherals::take().unwrap();
-
-    // Safe because interrupts are disabled after a reset.
-    #[cfg(feature = "unsafe")]
-    let p = unsafe { Peripherals::steal() };
+fn init(_cs: CriticalSection) {
+    cfg_if! {
+        if #[cfg(not(feature = "unsafe"))] {
+            let p = Peripherals::take().unwrap();
+        } else {
+            // Safe because interrupts are disabled after a reset.
+            let p = unsafe { Peripherals::steal() };
+        }
+    }
 
     let wdt = &p.WATCHDOG_TIMER;
     wdt.wdtctl.write(|w| {
-        unsafe { w.bits(0x5A00) }.wdthold().set_bit()
+       w.wdtpw().password().wdthold().set_bit()
     });
 
     let port_1_2 = &p.PORT_1_2;
@@ -49,33 +55,33 @@ fn main() -> ! {
     mspint::free(|cs| {
         *PERIPHERALS.borrow(*cs).borrow_mut() = Some(p);
     });
+}
 
-    unsafe {
-        mspint::enable();
-    }
+
+#[entry(interrupt_enable(pre_interrupt = init))]
+fn main() -> ! {
 
     loop {}
 }
 
 #[interrupt]
 #[allow(unused_variables)]
-fn TIMER0_A1() {
-    mspint::free(|cs| {
-        #[cfg(not(feature = "unsafe"))]
-        let p_ref = PERIPHERALS.borrow(*cs).borrow();
-        #[cfg(not(feature = "unsafe"))]
-        let p = p_ref.as_ref().unwrap();
+fn TIMER0_A1(cs: CriticalSection) {
+    cfg_if! {
+        if #[cfg(not(feature = "unsafe"))] {
+            let p_ref = PERIPHERALS.borrow(cs).borrow();
+            let p = p_ref.as_ref().unwrap();
+        } else {
+            // Safe because msp430 disables interrupts on handler entry. Therefore the handler
+            // has full control/access to peripherals without data races.
+            let p = unsafe { Peripherals::steal() };
+        }
+    }
 
-        // Safe because msp430 disables interrupts on handler entry. Therefore the handler
-        // has full control/access to peripherals without data races.
-        #[cfg(feature = "unsafe")]
-        let p = unsafe { Peripherals::steal() };
+    let timer = &p.TIMER0_A3;
+    timer.tacctl1.modify(|_, w| w.ccifg().clear_bit());
 
-        let timer = &p.TIMER0_A3;
-        timer.tacctl1.modify(|_, w| w.ccifg().clear_bit());
-
-        let port_1_2 = &p.PORT_1_2;
-        port_1_2.p1out.modify(|r, w| w.p0().bit(!r.p0().bit())
-                                      .p6().bit(!r.p6().bit()));
-    });
+    let port_1_2 = &p.PORT_1_2;
+    port_1_2.p1out.modify(|r, w| w.p0().bit(!r.p0().bit())
+                                    .p6().bit(!r.p6().bit()));
 }
