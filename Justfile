@@ -1,6 +1,6 @@
 set dotenv-load
 
-build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" WORKSPACE="take-api":
+build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" WORKSPACE="test-cases":
     #!/bin/sh
 
     set -eux

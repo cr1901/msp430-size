@@ -1,5 +1,5 @@
 [workspace]
-members = ["critical", "take-api"]
+members = ["critical", "test-cases"]
 resolver = "2"
 
 [profile.release]
