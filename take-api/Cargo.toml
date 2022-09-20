@@ -28,5 +28,4 @@ once_cell = { version = "1.7.0", default_features = false }
 
 [features]
 unsafe = []
-use-bare-metal = []
 use-extern-cs = []
