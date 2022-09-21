@@ -15,6 +15,11 @@ cfg_if! {
         extern crate panic_msp430;
         // Required for generating actual main.
         use msp430_rt::entry;
+    } else if #[cfg(target_arch = "arm") ] {
+        extern crate critical;
+
+        use panic_halt as _;
+        use cortex_m_rt::entry;
     }
 }
 
@@ -38,7 +43,7 @@ where
                 let sr = core::ptr::read_volatile(&fake_sr as *const u16);
                 asm!("");
                 sr
-            }
+             }
 
             unsafe fn release(restore_state: u16) {    
                 if restore_state != 0 {
