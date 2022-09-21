@@ -43,63 +43,30 @@ mod internal {
         if #[cfg(feature = "msp430")] {
             use msp430::{register, interrupt};
 
-            #[cfg_attr(feature = "inline", inline)]
-            pub unsafe fn acquire() -> u16 {
-                let status = register::sr::read();
-                interrupt::disable();
-                // Safety: Sr is repr(C), RawRestoreState is u16, and Sr contains
-                // only a single u16. This should be fine.
-                core::mem::transmute(status)
-            }
-
-            #[cfg_attr(feature = "inline", inline)]
-            pub unsafe fn release(restore_state: u16) {
-                // Safety: Must be called w/ acquire, otherwise we could receive
-                // an invalid Sr (even though internally it's a u16, not all bits
-                // are actually used). It would be better to pass Sr as
-                // RawRestoreState, but since we can't, this will be acceptable,
-                // See acquire() for why this is safe.
-                let sr: register::sr::Sr = core::mem::transmute(restore_state);
-            
-                if sr.gie() {
-                    interrupt::enable();
-                }
+            fn read_ie() -> bool {
+                register::sr::read().gie()
             }
         } else if #[cfg(feature = "cortex-m")] {
             use cortex_m::register::primask;
             use cortex_m::interrupt;
 
-            #[cfg_attr(feature = "inline", inline)]
-            pub unsafe fn acquire() -> u16 {
-                let was_active = primask::read().is_active();
-                interrupt::disable();
-                was_active as u16
+            fn read_ie() -> bool {
+                primask::read().is_active()
             }
+        }
+    }
 
-            #[cfg_attr(feature = "inline", inline)]
-            pub unsafe fn release(restore_state: u16) {
-                if restore_state != 0 {
-                    interrupt::enable()
-                }
-            }
-        } else {
-            use core::arch::asm;
+    #[cfg_attr(feature = "inline", inline)]
+    pub unsafe fn acquire() -> u16 {
+        let was_active = read_ie();
+        interrupt::disable();
+        was_active as u16
+    }
 
-            #[cfg_attr(feature = "inline", inline)]
-            pub unsafe fn acquire() -> u16 {
-                let fake_sr: u16 = 0;
-
-                let sr = core::ptr::read_volatile(&fake_sr as *const u16);
-                asm!("");
-                sr
-            }
-
-            #[cfg_attr(feature = "inline", inline)]
-            pub unsafe fn release(restore_state: u16) {
-                if restore_state != 0 {
-                    asm!("");
-                }
-            }
+    #[cfg_attr(feature = "inline", inline)]
+    pub unsafe fn release(restore_state: u16) {
+        if restore_state != 0 {
+            interrupt::enable();
         }
     }
 }
