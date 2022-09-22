@@ -5,11 +5,6 @@ use critical_section::CriticalSection;
 
 // For the critical-lto example, critical crate only provides acquire/release.
 #[no_mangle]
-pub unsafe fn acquire() -> u16 {
-    internal::acquire()
-}
-
-#[no_mangle]
 pub unsafe fn release(restore_state: u16) {
     internal::release(restore_state)
 }
@@ -21,9 +16,8 @@ where
     F: FnOnce(CriticalSection) -> R,
 {
     unsafe {
-        let restore_state = internal::acquire();
         let r = f(CriticalSection::new());
-        internal::release(restore_state);
+        internal::release(0);
         r
     }
 }
@@ -39,16 +33,8 @@ mod internal {
     use core::arch::asm;
 
     #[cfg_attr(feature = "inline", inline)]
-    pub unsafe fn acquire() -> u16 {
-        let fake_sr: u16 = 0;
-
-        let sr = core::ptr::read_volatile(&fake_sr as *const u16);
-        sr
-    }
-
-    #[cfg_attr(feature = "inline", inline)]
     pub unsafe fn release(restore_state: u16) {
-        if restore_state != 0 {
+        if core::ptr::read_volatile(&restore_state as *const u16) != 0 {
             asm!("nop
             nop
             nop
