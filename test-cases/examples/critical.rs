@@ -62,13 +62,15 @@ fn main() -> ! {
 
 fn start_timer() -> Result<(), ()> {
     free(|_| {
+        unsafe {  asm!(""); }
+
         let _ = &PERIPHERALS
                     .borrow(unsafe { CriticalSection::new() })
                     .get()
                     // .unwrap(); // If unwrap() is used instead, codegen is identical.
-                    .ok_or(())?; 
+                    .ok_or(())?;
 
-        unsafe {  asm!(""); }
+        unsafe {  asm!(""); }            
         Ok(())
     })
 }

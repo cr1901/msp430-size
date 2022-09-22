@@ -43,7 +43,6 @@ mod internal {
         let fake_sr: u16 = 0;
 
         let sr = core::ptr::read_volatile(&fake_sr as *const u16);
-        asm!("nop");
         sr
     }
 
