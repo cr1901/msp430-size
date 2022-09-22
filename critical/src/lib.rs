@@ -29,37 +29,38 @@ where
 }
 
 // acquire/release() are wrappers for acquire/release_internal.
-// Features provided for 3 implementations:
+// The same body is used for two architectures:
 // * MSP430
 // * Cortex-M
-// * Arch-agnostic dummy code
 //
 // In addition, an inline feature enables an inline hint, which changes
 // codegen.
 mod internal {
-    use cfg_if::cfg_if;
-
-    cfg_if! {
-        if #[cfg(feature = "msp430")] {
-            use msp430::interrupt;
-        } else if #[cfg(feature = "cortex-m")] {
-            use cortex_m::interrupt;
-        }
-    }
+    use core::arch::asm;
 
     #[cfg_attr(feature = "inline", inline)]
     pub unsafe fn acquire() -> u16 {
         let fake_sr: u16 = 0;
 
         let sr = core::ptr::read_volatile(&fake_sr as *const u16);
-        interrupt::disable();
+        asm!("nop");
         sr
     }
 
     #[cfg_attr(feature = "inline", inline)]
     pub unsafe fn release(restore_state: u16) {
         if restore_state != 0 {
-            interrupt::enable();
+            asm!("nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop
+            nop");
         }
     }
 }
