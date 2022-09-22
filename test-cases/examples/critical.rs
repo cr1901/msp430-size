@@ -28,15 +28,15 @@ cfg_if! {
     } else {
         pub fn free<F, R>(f: F) -> R
         where
-            F: FnOnce(CriticalSection) -> R,
+            F: FnOnce() -> R,
         {
             extern "Rust" {
-                fn release(restore_state: u16);
+                fn release();
             }    
 
             unsafe {
-                let r = f(CriticalSection::new());
-                release(0);
+                let r = f();
+                release();
                 r
             }
         }
@@ -47,7 +47,7 @@ static PERIPHERALS: Mutex<OnceCell<()>> = Mutex::new(OnceCell::new());
 
 #[entry]
 fn main() -> ! {
-    free(|_| {
+    free(|| {
         let _ = PERIPHERALS
             .borrow(unsafe { CriticalSection::new() })
             .set(())?;

@@ -1,23 +1,21 @@
 #![no_std]
 #![feature(asm_experimental_arch)]
 
-use critical_section::CriticalSection;
-
 // For the critical-lto example, critical crate only provides acquire/release.
 #[no_mangle]
-pub unsafe fn release(restore_state: u16) {
-    internal::release(restore_state)
+pub unsafe fn release() {
+    internal::release()
 }
 
 // For the critical example, the critical crate provides the free function
 // as well as acquire/release.
 pub fn free<F, R>(f: F) -> R
 where
-    F: FnOnce(CriticalSection) -> R,
+    F: FnOnce() -> R,
 {
     unsafe {
-        let r = f(CriticalSection::new());
-        internal::release(0);
+        let r = f();
+        internal::release();
         r
     }
 }
@@ -33,19 +31,21 @@ mod internal {
     use core::arch::asm;
 
     #[cfg_attr(feature = "inline", inline)]
-    pub unsafe fn release(restore_state: u16) {
-        if core::ptr::read_volatile(&restore_state as *const u16) != 0 {
-            asm!("nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop
-            nop");
+    pub unsafe fn release() {
+        let fake_reg: u16 = 0;
+        if core::ptr::read_volatile(&fake_reg as *const u16) != 0 {
+            asm!(
+                "nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop
+                nop"
+            );
         }
     }
 }
