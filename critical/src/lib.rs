@@ -41,26 +41,19 @@ mod internal {
 
     cfg_if! {
         if #[cfg(feature = "msp430")] {
-            use msp430::{register, interrupt};
-
-            fn read_ie() -> bool {
-                register::sr::read().gie()
-            }
+            use msp430::interrupt;
         } else if #[cfg(feature = "cortex-m")] {
-            use cortex_m::register::primask;
             use cortex_m::interrupt;
-
-            fn read_ie() -> bool {
-                primask::read().is_active()
-            }
         }
     }
 
     #[cfg_attr(feature = "inline", inline)]
     pub unsafe fn acquire() -> u16 {
-        let was_active = read_ie();
+        let fake_sr: u16 = 0;
+
+        let sr = core::ptr::read_volatile(&fake_sr as *const u16);
         interrupt::disable();
-        was_active as u16
+        sr
     }
 
     #[cfg_attr(feature = "inline", inline)]
