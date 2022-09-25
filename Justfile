@@ -1,6 +1,6 @@
 set dotenv-load
 
-build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" WORKSPACE="test-cases":
+build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" RELEASE="1" WORKSPACE="test-cases":
     #!/bin/sh
 
     set -eux
@@ -18,12 +18,20 @@ build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" WO
         exit 1
     fi
 
+    if [ {{RELEASE}} = "1" ]; then
+        RELEASE="--release"
+        PROFILE=release
+    else
+        RELEASE=""
+        PROFILE=debug
+    fi
+
     if [ -z {{EXAMPLE}} ]; then
         EXAMPLES=""
-        TARGET=target/{{TARGET}}/release/{{WORKSPACE}}
+        TARGET=target/{{TARGET}}/$PROFILE/{{WORKSPACE}}
     else
         EXAMPLES="--example={{EXAMPLE}}"
-        TARGET=target/{{TARGET}}/release/examples/{{EXAMPLE}}
+        TARGET=target/{{TARGET}}/$PROFILE/examples/{{EXAMPLE}}
     fi
 
     # TODO: 
@@ -32,7 +40,7 @@ build-example EXAMPLE FEATURES="" TARGET="msp430-none-elf" OVERRIDE="nightly" WO
     # * Is RUSTC_BOOTSTRAP _actually_ required? I don't remember the context of
     # why I needed it.
 
-    cargo +{{OVERRIDE}} rustc --manifest-path=./{{WORKSPACE}}/Cargo.toml --target={{TARGET}} --release -Zbuild-std=core $EXAMPLES --features={{FEATURES}} -- --emit=obj=$TARGET.o,llvm-ir=$TARGET.ll,asm=$TARGET.s
+    cargo +{{OVERRIDE}} rustc --manifest-path=./{{WORKSPACE}}/Cargo.toml --target={{TARGET}} $RELEASE -Zbuild-std=core $EXAMPLES --features={{FEATURES}} -- --emit=obj=$TARGET.o,llvm-ir=$TARGET.ll,asm=$TARGET.s
     $OBJDUMP -Cd $TARGET > $TARGET.lst
     $READELF -a --wide $TARGET > $TARGET.sym
     $OBJDUMP -Cd $TARGET.o > $TARGET.o.lst

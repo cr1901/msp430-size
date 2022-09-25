@@ -85,3 +85,9 @@ fn TIMER0_A1(cs: CriticalSection) {
     port_1_2.p1out.modify(|r, w| w.p0().bit(!r.p0().bit())
                                     .p6().bit(!r.p6().bit()));
 }
+
+#[no_mangle]
+#[allow(unsafe_code)]
+extern "C" fn abort() -> ! {
+    panic!();
+}
