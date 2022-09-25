@@ -78,8 +78,9 @@ fn main() -> ! {
     }
 }
 
+// #[inline(never)]
 fn start_timer() -> Result<(), ()> {
-    free(|_| {
+    // free(|_| {
         let option = unsafe { 
             &mut PERIPHERALS
         };
@@ -90,5 +91,19 @@ fn start_timer() -> Result<(), ()> {
 
         unsafe { asm!(""); }
         Ok(())
-    })
+    // })
 }
+
+// just build-example "critical-lto" "" "msp430-none-elf" 
+// just build-example "critical-lto" "use-extern-cs" "msp430-none-elf"
+// returns different sizes using nightly-2022-08-10 (if free not commented out)
+// returns same size on nightly-2022-09-21
+//
+// If #[inline(never)] used on start_timer(), size changes compared to not
+// using #[inline(never)], even on nightly-2022-09-21 (incl. if free commented
+// out). Basically, the if inside the loop {} may or may not be optimized
+// out depending on the complexity of start_timer()'s body (even if #[inline(never)])
+//
+// See also: https://play.rust-lang.org/?version=stable&mode=release&edition=2021&gist=884d660cb609125f2e515919a5e3ea43
+// (Comment out first unsafe block to change codegen. Codegen may vary from
+// this example due to LTO).
