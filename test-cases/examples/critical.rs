@@ -28,17 +28,15 @@ cfg_if! {
     } else {
         pub fn free<F, R>(f: F) -> R
         where
-            F: FnOnce(CriticalSection) -> R,
+            F: FnOnce() -> R,
         {
             extern "Rust" {
-                fn acquire() -> u16;
-                fn release(restore_state: u16);
+                fn release();
             }    
 
             unsafe {
-                let restore_state = acquire();
-                let r = f(CriticalSection::new());
-                release(restore_state);
+                let r = f();
+                release();
                 r
             }
         }
@@ -49,26 +47,16 @@ static PERIPHERALS: Mutex<OnceCell<()>> = Mutex::new(OnceCell::new());
 
 #[entry]
 fn main() -> ! {
-    let _ = PERIPHERALS
-        .borrow(unsafe { CriticalSection::new() })
-        .set(());
+    free(|| {
+        let _ = PERIPHERALS
+            .borrow(unsafe { CriticalSection::new() })
+            .set(())?;
 
-    start_timer().unwrap();
+        Ok::<(),()>(())
+    }).unwrap();
+
     loop {
         // start_timer().unwrap();
         unsafe { asm!(""); }
     }
-}
-
-fn start_timer() -> Result<(), ()> {
-    free(|_| {
-        let _ = &PERIPHERALS
-                    .borrow(unsafe { CriticalSection::new() })
-                    .get()
-                    // .unwrap(); // If unwrap() is used instead, codegen is identical.
-                    .ok_or(())?; 
-
-        unsafe {  asm!(""); }
-        Ok(())
-    })
 }

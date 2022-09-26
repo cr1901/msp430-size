@@ -6,14 +6,7 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-cfg-if = "1.0.0"
 critical-section = "1.0.0"
-
-[target.'cfg(target_arch = "msp430")'.dependencies]
-msp430 = { version = "0.4.0", features = ["critical-section-single-core"], optional=true }
-
-[target.'cfg(target_arch = "arm")'.dependencies]
-cortex-m = { version = "0.7.6", optional = true }
 
 [features]
 inline = []
